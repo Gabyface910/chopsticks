@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Solved Chopsticks</title>
+		<style>
+			body {
+				font-family: Segoe UI, sans-serif;
+			}
+			table {
+  /* Forces adjacent cell borders to merge into a single line */
+  border-collapse: collapse; 
+  width: 100%;
+}
+
+th, td {
+  /* Sets thickness, style, and color of the cell borders */
+  border: 2px solid #333333; 
+  
+  /* Adds internal breathing room so text doesn't touch the border */
+  padding: 12px; 
+  
+  /* aligns text cleanly */
+  text-align: left; 
+}
+		</style>
+	</head>
+	<body>
+	<table><thead><tr><th>Position</th><th>Best Move</th><th>Evaluation</th></tr></thead><tbody>
+<tr><td>0, 1<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>0, 2<br>0, 1</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 3<br>0, 1</td><td>R snipes R</td><td>Defeat Imminent</td>
+<tr><td>0, 4<br>0, 1</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>0, 1</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>1, 3<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>1, 4<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>2, 2<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>2, 3<br>0, 1</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>2, 4<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>3, 3<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>3, 4<br>0, 1</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>4, 4<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>0, 1<br>0, 2</td><td>Split</td><td>Forced Draw</td>
+<tr><td>0, 2<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>0, 3<br>0, 2</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>0, 2</td><td>Split</td><td>Forced Draw</td>
+<tr><td>1, 1<br>0, 2</td><td>Split</td><td>Forced Draw</td>
+<tr><td>1, 2<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>1, 3<br>0, 2</td><td>Split</td><td>Forced Draw</td>
+<tr><td>1, 4<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>2, 2<br>0, 2</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>2, 4<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>3, 3<br>0, 2</td><td>Split</td><td>Forced Draw</td>
+<tr><td>3, 4<br>0, 2</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>4, 4<br>0, 2</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>0, 3</td><td>R snipes R</td><td>Defeat Imminent</td>
+<tr><td>0, 2<br>0, 3</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 3<br>0, 3</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>0, 3</td><td>R snipes R</td><td>Defeat Imminent</td>
+<tr><td>1, 1<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>0, 3</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>1, 3<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>1, 4<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>2, 3<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>2, 4<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>3, 3<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>3, 4<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>4, 4<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
+<tr><td>0, 1<br>0, 4</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 2<br>0, 4</td><td>Split</td><td>Forced Draw</td>
+<tr><td>0, 3<br>0, 4</td><td>Split</td><td>Forced Win</td>
+<tr><td>0, 4<br>0, 4</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>0, 4</td><td>Split</td><td>Forced Draw</td>
+<tr><td>1, 2<br>0, 4</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>0, 4</td><td>R snipes L</td><td>Forced Win</td>
+<tr><td>1, 4<br>0, 4</td><td>Split</td><td>Forced Draw</td>
+<tr><td>2, 2<br>0, 4</td><td>Split</td><td>Forced Draw</td>
+<tr><td>2, 3<br>0, 4</td><td>Split</td><td>Forced Draw</td>
+<tr><td>2, 4<br>0, 4</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>3, 3<br>0, 4</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>0, 4</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>4, 4<br>0, 4</td><td>R snipes L</td><td>Forced Draw</td>
+<tr><td>0, 2<br>1, 1</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 3<br>1, 1</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 4<br>1, 1</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 4<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 4<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 3<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>1, 1</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>4, 4<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>1, 2</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 2<br>1, 2</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>0, 3<br>1, 2</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>1, 2</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>1, 2</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>2, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 3<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>4, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>1, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 2<br>1, 3</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 3<br>1, 3</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>1, 3</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>1, 3</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>1, 3<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 4<br>1, 3</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>2, 2<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 4<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>1, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>4, 4<br>1, 3</td><td>L snipes L</td><td>Defeat Imminent</td>
+<tr><td>0, 1<br>1, 4</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 2<br>1, 4</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 3<br>1, 4</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 4<br>1, 4</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 4<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 4<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 3<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>1, 4</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>4, 4<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 3<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>1, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 3<br>2, 2</td><td>L snipes L</td><td>Forced Win</td>
+<tr><td>3, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>4, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>2, 3</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 2<br>2, 3</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 3<br>2, 3</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>1, 1<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>1, 3<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>1, 4<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>2, 3</td><td>R snipes L</td><td>Forced Win</td>
+<tr><td>2, 4<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>3, 3<br>2, 3</td><td>L snipes L</td><td>Forced Win</td>
+<tr><td>3, 4<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>4, 4<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>2, 4</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 2<br>2, 4</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 3<br>2, 4</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>2, 4</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>1, 1<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>2, 4</td><td>R snipes L</td><td>Forced Win</td>
+<tr><td>1, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 3<br>2, 4</td><td>L snipes L</td><td>Forced Win</td>
+<tr><td>3, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>4, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>3, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>0, 2<br>3, 3</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 4<br>3, 3</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>1, 1<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>3, 3</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>1, 3<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 4<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 2<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>3, 3</td><td>L snipes L</td><td>Forced Win</td>
+<tr><td>2, 4<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>4, 4<br>3, 3</td><td>L snipes L</td><td>Defeat Imminent</td>
+<tr><td>0, 1<br>3, 4</td><td>R snipes R</td><td>Forced Win</td>
+<tr><td>0, 2<br>3, 4</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 3<br>3, 4</td><td>R snipes R</td><td>Forced Draw</td>
+<tr><td>0, 4<br>3, 4</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>1, 1<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 2<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 4<br>3, 4</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>2, 2<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 4<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 3<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>0, 1<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 2<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>0, 3<br>4, 4</td><td>L snipes R</td><td>Forced Draw</td>
+<tr><td>1, 1<br>4, 4</td><td>L snipes L</td><td>Forced Win</td>
+<tr><td>1, 2<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>1, 3<br>4, 4</td><td>L snipes L</td><td>Forced Win</td>
+<tr><td>1, 4<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
+<tr><td>2, 2<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>2, 3<br>4, 4</td><td>L snipes L</td><td>Forced Win</td>
+<tr><td>2, 4<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 3<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
+<tr><td>3, 4<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
+</tbody></table>
+	</body>
+</html>
