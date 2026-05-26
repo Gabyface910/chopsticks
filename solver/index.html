@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chopsticks Position Solver</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .win { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .draw { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .loss { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .error { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+        
+        .pov-display {
+            background: #eef1f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+  This is an algorithm to solve Chopsticks problems. For a chart on reachable positions, see <a href="..">here</a>.
+    <h1>Chopsticks Solver</h1>
+    
+    <div class="input-group">
+        <label for="position">Enter 4-Digit Position (e.g., 1111 or 0104):</label>
+        <input type="text" id="position" placeholder="Format: Opponent hands then Player hands" maxlength="4" value="1111">
+    </div>
+
+    <div class="input-group">
+        <label for="turn">Whose turn is it?</label>
+        <select id="turn">
+            <option value="player">Player's Turn</option>
+            <option value="opponent">Opponent's Turn</option>
+        </select>
+    </div>
+
+    <button onclick="solvePosition()">Analyze Position</button>
+
+    <div id="result" class="result-box"></div>
+</div>
+
+<script>
+    // Global state engine variables
+    let stateValue = {};
+    let transitions = {};
+    let reverseTransitions = {};
+    let outDegree = {};
+
+    function applyOverflow(fingers) {
+        if (fingers === 5) return 0;
+        return fingers > 5 ? fingers - 5 : fingers;
+    }
+
+    function getMoves(stateStr) {
+        // State encoding: "ol,or,pl,pr,turn"  (turn: 0=Player, 1=Opponent)
+        let parts = stateStr.split(',').map(Number);
+        let o_l = parts[0], o_r = parts[1], p_l = parts[2], p_r = parts[3], turn = parts[4];
+        let moves = [];
+
+        if ((p_l === 0 && p_r === 0) || (o_l === 0 && o_r === 0)) {
+            return moves;
+        }
+
+        if (turn === 0) { // Player's Turn
+            if (p_l > 0) {
+                if (o_l > 0) moves.push({ label: "L snipes L", next: `${applyOverflow(o_l + p_l)},${o_r},${p_l},${p_r},1` });
+                if (o_r > 0) moves.push({ label: "L snipes R", next: `${o_l},${applyOverflow(o_r + p_l)},${p_l},${p_r},1` });
+            }
+            if (p_r > 0) {
+                if (o_l > 0) moves.push({ label: "R snipes L", next: `${applyOverflow(o_l + p_r)},${o_r},${p_l},${p_r},1` });
+                if (o_r > 0) moves.push({ label: "R snipes R", next: `${o_l},${applyOverflow(o_r + p_r)},${p_l},${p_r},1` });
+            }
+            let total = p_l + p_r;
+            if ((total === 2 || total === 4) && (p_l === 0 || p_r === 0)) {
+                let half = total / 2;
+                moves.push({ label: "Split", next: `${o_l},${o_r},${half},${half},1` });
+            }
+        } else { // Opponent's Turn
+            if (o_l > 0) {
+                if (p_l > 0) moves.push({ label: "L snipes L", next: `${o_l},${o_r},${applyOverflow(p_l + o_l)},${p_r},0` });
+                if (p_r > 0) moves.push({ label: "L snipes R", next: `${o_l},${o_r},${p_l},${applyOverflow(p_r + o_l)},0` });
+            }
+            if (o_r > 0) {
+                if (p_l > 0) moves.push({ label: "R snipes L", next: `${o_l},${o_r},${applyOverflow(p_l + o_r)},${p_r},0` });
+                if (p_r > 0) moves.push({ label: "R snipes R", next: `${o_l},${o_r},${p_l},${applyOverflow(p_r + o_r)},0` });
+            }
+            let total = o_l + o_r;
+            if ((total === 2 || total === 4) && (o_l === 0 || o_r === 0)) {
+                let half = total / 2;
+                moves.push({ label: "Split", next: `${half},${half},p_l,p_r,0` });
+                moves.push({ label: "Split", next: `${half},${half},${p_l},${p_r},0` });
+            }
+        }
+        return moves;
+    }
+
+    // Pointers computed backwards using global Retrograde Propagation
+    function precomputeMatrix() {
+        let queue = [];
+        let visited = new Set();
+        
+        // Root evaluation generation
+        for (let t = 0; t <= 1; t++) {
+            let start = `1,1,1,1,${t}`;
+            queue.push(start);
+            visited.add(start);
+        }
+
+        let index = 0;
+        while (index < queue.length) {
+            let curr = queue[index++];
+            let moves = getMoves(curr);
+            outDegree[curr] = moves.length;
+            transitions[curr] = moves;
+
+            for (let move of moves) {
+                if (!reverseTransitions[move.next]) reverseTransitions[move.next] = [];
+                reverseTransitions[move.next].push({ label: move.label, parent: curr });
+
+                if (!visited.has(move.next)) {
+                    visited.add(move.next);
+                    queue.push(move.next);
+                }
+            }
+        }
+
+        // Initialize terminal bounds
+        let propQueue = [];
+        for (let state in outDegree) {
+            let parts = state.split(',').map(Number);
+            if (parts[2] === 0 && parts[3] === 0) {
+                stateValue[state] = 'L'; // Player loses
+                propQueue.push(state);
+            } else if (parts[0] === 0 && parts[1] === 0) {
+                stateValue[state] = 'W'; // Player wins
+                propQueue.push(state);
+            }
+        }
+
+        // Process retrograde tree
+        while (propQueue.length > 0) {
+            let curr = propQueue.shift();
+            let val = stateValue[curr];
+
+            let parents = reverseTransitions[curr] || [];
+            for (let item of parents) {
+                let parent = item.parent;
+                if (stateValue[parent]) continue;
+
+                let pParts = parent.split(',').map(Number);
+                let pTurn = pParts[4];
+
+                if (pTurn === 0) { // Player's turn to act
+                    if (val === 'W') {
+                        stateValue[parent] = 'W';
+                        propQueue.push(parent);
+                    } else {
+                        outDegree[parent]--;
+                        if (outDegree[parent] === 0) {
+                            stateValue[parent] = 'L';
+                            propQueue.push(parent);
+                        }
+                    }
+                } else { // Opponent's turn to act
+                    if (val === 'L') {
+                        stateValue[parent] = 'L';
+                        propQueue.push(parent);
+                    } else {
+                        outDegree[parent]--;
+                        if (outDegree[parent] === 0) {
+                            stateValue[parent] = 'W';
+                            propQueue.push(parent);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Everything else is caught in a forced loop draw
+        for (let state in outDegree) {
+            if (!stateValue[state]) stateValue[state] = 'D';
+        }
+    }
+
+    // Run solver calculations once on script launch
+    precomputeMatrix();
+
+    function solvePosition() {
+        let posInput = document.getElementById("position").value.trim();
+        let turnInput = document.getElementById("turn").value;
+        let resultDiv = document.getElementById("result");
+
+        // Input checks
+        if (posInput.length !== 4 || !/^[0-4]+$/.test(posInput)) {
+            resultDiv.className = "result-box error";
+            resultDiv.innerHTML = "<strong>Error:</strong> Please enter a valid 4-digit combination using numbers 0-4.";
+            resultDiv.style.display = "block";
+            return;
+        }
+
+        let o_l = parseInt(posInput[0]);
+        let o_r = parseInt(posInput[1]);
+        let p_l = parseInt(posInput[2]);
+        let p_r = parseInt(posInput[3]);
+        let turnCode = turnInput === "player" ? 0 : 1;
+
+        let queryState = `${o_l},${o_r},${p_l},${p_r},${turnCode}`;
+        
+        let visualPOV = `<div class="pov-display">${o_l}, ${o_r}  <-- Opponent\n${p_l}, ${p_r}  <-- Player  </div>`;
+
+        if (p_l === 0 && p_r === 0) {
+            resultDiv.className = "result-box loss";
+            resultDiv.innerHTML = visualPOV + "<strong>Status:</strong> Already Over. Player has 0 fingers left (Loss).";
+            resultDiv.style.display = "block";
+            return;
+        }
+        if (o_l === 0 && o_r === 0) {
+            resultDiv.className = "result-box win";
+            resultDiv.innerHTML = visualPOV + "<strong>Status:</strong> Already Over. Opponent has 0 fingers left (Win!).";
+            resultDiv.style.display = "block";
+            return;
+        }
+
+        let evaluation = stateValue[queryState];
+        let moves = transitions[queryState] || [];
+
+        if (!evaluation) {
+            resultDiv.className = "result-box error";
+            resultDiv.innerHTML = visualPOV + "<strong>Evaluation:</strong> Position unreachable or invalid within standard opening conditions.";
+            resultDiv.style.display = "block";
+            return;
+        }
+
+        let statusText = "";
+        let className = "";
+
+        if (turnCode === 0) { // Player Action
+            if (evaluation === 'W') { statusText = "Forced Win"; className = "win"; }
+            else if (evaluation === 'D') { statusText = "Draw (for now)"; className = "draw"; }
+            else { statusText = "Defeat Imminent"; className = "loss"; }
+
+            // Sort actions based on game values: W > D > L
+            moves.sort((a, b) => {
+                let map = {'W': 0, 'D': 1, 'L': 2};
+                return map[stateValue[a.next]] - map[stateValue[b.next]];
+            });
+
+            let bestMove = moves.length > 0 ? moves[0].label : "None available";
+            resultDiv.className = "result-box " + className;
+            resultDiv.innerHTML = visualPOV + `<strong>Game Eval:</strong> ${statusText}<br><strong>Best Move:</strong> ${bestMove}`;
+        } else { // Opponent Action
+            if (evaluation === 'W') { statusText = "Forced Win for Player"; className = "win"; }
+            else if (evaluation === 'D') { statusText = "Draw (for now)"; className = "draw"; }
+            else { statusText = "Player is cooked"; className = "loss"; }
+
+            // Opponent values: L (best for opponent) > D > W
+            moves.sort((a, b) => {
+                let map = {'L': 0, 'D': 1, 'W': 2};
+                return map[stateValue[a.next]] - map[stateValue[b.next]];
+            });
+
+            let bestOpponentMove = moves.length > 0 ? moves[0].label : "None available";
+            resultDiv.className = "result-box " + className;
+            resultDiv.innerHTML = visualPOV + `<strong>Game Eval:</strong> ${statusText}<br><strong>Expected Opponent Move:</strong> ${bestOpponentMove}`;
+        }
+
+        resultDiv.style.display = "block";
+    }
+</script>
+
+</body>
+</html>
