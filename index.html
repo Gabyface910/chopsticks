@@ -1,221 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>Solved Chopsticks</title>
-		<style>
-			body {
-				font-family: Segoe UI, sans-serif;
-			}
-			table {
-  /* Forces adjacent cell borders to merge into a single line */
-  border-collapse: collapse; 
-  width: 100%;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Chopfish</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 0;
+            color: #1a1a1a;
+            font-size: 24px;
+        }
+        .rules-note {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .status-board {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .side {
+            flex: 1;
+        }
+        .side h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #495057;
+        }
+        .hand-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .hand {
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            background: #e9ecef;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .hand.dead {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            text-decoration: line-through;
+        }
+        .console-log {
+            height: 80px;
+            background: #212529;
+            color: #00ff66;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            text-align: left;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .moves-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Chopfish AI</h1>
+    <div class="rules-note">Rule setup: Even Splits Only & Overflow Wrap-around</div>
+
+    <div class="status-board">
+        <div class="side">
+            <h3>Chopfish</h3>
+            <div class="hand-container">
+                <div id="bot-l" class="hand">1</div>
+                <div id="bot-r" class="hand">1</div>
+            </div>
+        </div>
+        <div class="side">
+            <h3>YOU</h3>
+            <div class="hand-container">
+                <div id="player-l" class="hand">1</div>
+                <div id="player-r" class="hand">1</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="console" class="console-log">Welcome! It is your turn.</div>
+
+    <div id="moves" class="moves-container"></div>
+</div>
+
+<script>
+class MinimaxChopsticks {
+    constructor() {
+        this.player = [1, 1];
+        this.bot = [1, 1];
+        this.currentTurn = "Player";
+        this.gameOver = false;
+    }
+
+    applyOverflowRule(fingers) {
+        if (fingers === 5) return 0;
+        if (fingers > 5) return fingers - 5;
+        return fingers;
+    }
+
+    isGameOver(player, bot) {
+        const pSum = player[0] + player[1];
+        const bSum = bot[0] + bot[1];
+        if (pSum === 0) return "Bot";
+        if (bSum === 0) return "Player";
+        return null;
+    }
+
+    getValidMoves(attacker, defender) {
+        let moves = [];
+        
+        // 1. Attack Moves
+        for (let a = 0; a < 2; a++) {
+            if (attacker[a] === 0) continue;
+            for (let d = 0; d < 2; d++) {
+                if (defender[d] === 0) continue;
+                moves.push({ type: "attack", attackerIdx: a, defenderIdx: d });
+            }
+        }
+        
+        // 2. Even Split Moves
+        const totalFingers = attacker[0] + attacker[1];
+        if ((totalFingers === 2 || totalFingers === 4) && (attacker[0] === 0 || attacker[1] === 0)) {
+            const half = totalFingers / 2;
+            moves.push({ type: "split", left: half, right: half });
+        }
+        
+        return moves;
+    }
+
+    evaluateState(player, bot) {
+        const pSum = player[0] + player[1];
+        const bSum = bot[0] + bot[1];
+        
+        if (pSum === 0) return 1000;
+        if (bSum === 0) return -1000;
+        
+        let botScore = bSum + (bot[0] > 0 ? 5 : 0) + (bot[1] > 0 ? 5 : 0);
+        let playerScore = pSum + (player[0] > 0 ? 5 : 0) + (player[1] > 0 ? 5 : 0);
+        
+        return botScore - playerScore;
+    }
+
+    minimax(playerState, botState, depth, isMaximizing) {
+        const winner = this.isGameOver(playerState, botState);
+        if (depth === 0 || winner) {
+            return { score: this.evaluateState(playerState, botState), move: null };
+        }
+
+        if (isMaximizing) {
+            let maxEval = -Infinity;
+            let bestMove = null;
+            const validMoves = this.getValidMoves(botState, playerState);
+            
+            for (let move of validMoves) {
+                let nextPlayer = [...playerState];
+                let nextBot = [...botState];
+                
+                if (move.type === "attack") {
+                    let hitValue = nextBot[move.attackerIdx];
+                    nextPlayer[move.defenderIdx] = this.applyOverflowRule(nextPlayer[move.defenderIdx] + hitValue);
+                } else if (move.type === "split") {
+                    nextBot = [move.left, move.right];
+                }
+                
+                let result = this.minimax(nextPlayer, nextBot, depth - 1, false);
+                if (result.score > maxEval) {
+                    maxEval = result.score;
+                    bestMove = move;
+                }
+            }
+            return { score: maxEval, move: bestMove };
+        } else {
+            let minEval = Infinity;
+            let bestMove = null;
+            const validMoves = this.getValidMoves(playerState, botState);
+            
+            for (let move of validMoves) {
+                let nextPlayer = [...playerState];
+                let nextBot = [...botState];
+                
+                if (move.type === "attack") {
+                    let hitValue = nextPlayer[move.attackerIdx];
+                    nextBot[move.defenderIdx] = this.applyOverflowRule(nextBot[move.defenderIdx] + hitValue);
+                } else if (move.type === "split") {
+                    nextPlayer = [move.left, move.right];
+                }
+                
+                let result = this.minimax(nextPlayer, nextBot, depth - 1, true);
+                if (result.score < minEval) {
+                    minEval = result.score;
+                    bestMove = move;
+                }
+            }
+            return { score: minEval, move: bestMove };
+        }
+    }
 }
 
-th, td {
-  /* Sets thickness, style, and color of the cell borders */
-  border: 2px solid #333333; 
-  
-  /* Adds internal breathing room so text doesn't touch the border */
-  padding: 12px; 
-  
-  /* aligns text cleanly */
-  text-align: left; 
+// UI Controller Logic
+const game = new MinimaxChopsticks();
+
+function updateUI() {
+    // Update display values
+    document.getElementById("bot-l").innerText = game.bot[0];
+    document.getElementById("bot-r").innerText = game.bot[1];
+    document.getElementById("player-l").innerText = game.player[0];
+    document.getElementById("player-r").innerText = game.player[1];
+
+    // Toggle dead styles
+    document.getElementById("bot-l").className = game.bot[0] === 0 ? "hand dead" : "hand";
+    document.getElementById("bot-r").className = game.bot[1] === 0 ? "hand dead" : "hand";
+    document.getElementById("player-l").className = game.player[0] === 0 ? "hand dead" : "hand";
+    document.getElementById("player-r").className = game.player[1] === 0 ? "hand dead" : "hand";
+
+    // Check Win Conditions
+    const winner = game.isGameOver(game.player, game.bot);
+    if (winner) {
+        game.gameOver = true;
+        logToConsole(`Game Over! ${winner === 'Player' ? 'You win!' : 'Bot wins!'}`);
+        document.getElementById("moves").innerHTML = `<button onclick="window.location.reload()">Play Again</button>`;
+        return;
+    }
+
+    if (game.currentTurn === "Player") {
+        renderPlayerMoves();
+    } else {
+        document.getElementById("moves").innerHTML = "";
+        setTimeout(handleBotTurn, 800); // Small pause so the AI feels alive
+    }
 }
-		</style>
-	</head>
-	<body>
-		This is a table of reachable Chopsticks positions. For a position solver, see <a href="./solver/">here</a>.
-	<table><thead><tr><th>Position</th><th>Best Move</th><th>Evaluation</th></tr></thead><tbody>
-<tr><td>0, 1<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>0, 2<br>0, 1</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 3<br>0, 1</td><td>R snipes R</td><td>Defeat Imminent</td>
-<tr><td>0, 4<br>0, 1</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>0, 1</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>1, 3<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>1, 4<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>2, 2<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>2, 3<br>0, 1</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>2, 4<br>0, 1</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>3, 3<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>3, 4<br>0, 1</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>4, 4<br>0, 1</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>0, 1<br>0, 2</td><td>Split</td><td>Forced Draw</td>
-<tr><td>0, 2<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>0, 3<br>0, 2</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>0, 2</td><td>Split</td><td>Forced Draw</td>
-<tr><td>1, 1<br>0, 2</td><td>Split</td><td>Forced Draw</td>
-<tr><td>1, 2<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>1, 3<br>0, 2</td><td>Split</td><td>Forced Draw</td>
-<tr><td>1, 4<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>2, 2<br>0, 2</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>2, 4<br>0, 2</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>3, 3<br>0, 2</td><td>Split</td><td>Forced Draw</td>
-<tr><td>3, 4<br>0, 2</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>4, 4<br>0, 2</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>0, 3</td><td>R snipes R</td><td>Defeat Imminent</td>
-<tr><td>0, 2<br>0, 3</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 3<br>0, 3</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>0, 3</td><td>R snipes R</td><td>Defeat Imminent</td>
-<tr><td>1, 1<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>0, 3</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>1, 3<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>1, 4<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>2, 3<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>2, 4<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>3, 3<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>3, 4<br>0, 3</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>4, 4<br>0, 3</td><td>R snipes L</td><td>Defeat Imminent</td>
-<tr><td>0, 1<br>0, 4</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 2<br>0, 4</td><td>Split</td><td>Forced Draw</td>
-<tr><td>0, 3<br>0, 4</td><td>Split</td><td>Forced Win</td>
-<tr><td>0, 4<br>0, 4</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>0, 4</td><td>Split</td><td>Forced Draw</td>
-<tr><td>1, 2<br>0, 4</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>0, 4</td><td>R snipes L</td><td>Forced Win</td>
-<tr><td>1, 4<br>0, 4</td><td>Split</td><td>Forced Draw</td>
-<tr><td>2, 2<br>0, 4</td><td>Split</td><td>Forced Draw</td>
-<tr><td>2, 3<br>0, 4</td><td>Split</td><td>Forced Draw</td>
-<tr><td>2, 4<br>0, 4</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>3, 3<br>0, 4</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>0, 4</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>4, 4<br>0, 4</td><td>R snipes L</td><td>Forced Draw</td>
-<tr><td>0, 2<br>1, 1</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 3<br>1, 1</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 4<br>1, 1</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 4<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 4<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 3<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>1, 1</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>4, 4<br>1, 1</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>1, 2</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 2<br>1, 2</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>0, 3<br>1, 2</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>1, 2</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>1, 2</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>2, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 3<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>4, 4<br>1, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>1, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 2<br>1, 3</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 3<br>1, 3</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>1, 3</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>1, 3</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>1, 3<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 4<br>1, 3</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>2, 2<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 4<br>1, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>1, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>4, 4<br>1, 3</td><td>L snipes L</td><td>Defeat Imminent</td>
-<tr><td>0, 1<br>1, 4</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 2<br>1, 4</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 3<br>1, 4</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 4<br>1, 4</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 4<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 4<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 3<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>1, 4</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>4, 4<br>1, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 3<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>2, 2</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>1, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 3<br>2, 2</td><td>L snipes L</td><td>Forced Win</td>
-<tr><td>3, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>4, 4<br>2, 2</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>2, 3</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 2<br>2, 3</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 3<br>2, 3</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>1, 1<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>1, 3<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>1, 4<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>2, 3</td><td>R snipes L</td><td>Forced Win</td>
-<tr><td>2, 4<br>2, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>3, 3<br>2, 3</td><td>L snipes L</td><td>Forced Win</td>
-<tr><td>3, 4<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>4, 4<br>2, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>2, 4</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 2<br>2, 4</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 3<br>2, 4</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>2, 4</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>1, 1<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>2, 4</td><td>R snipes L</td><td>Forced Win</td>
-<tr><td>1, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 3<br>2, 4</td><td>L snipes L</td><td>Forced Win</td>
-<tr><td>3, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>4, 4<br>2, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>3, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>0, 2<br>3, 3</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 4<br>3, 3</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>1, 1<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>3, 3</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>1, 3<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 4<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 2<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>3, 3</td><td>L snipes L</td><td>Forced Win</td>
-<tr><td>2, 4<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>3, 3</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>4, 4<br>3, 3</td><td>L snipes L</td><td>Defeat Imminent</td>
-<tr><td>0, 1<br>3, 4</td><td>R snipes R</td><td>Forced Win</td>
-<tr><td>0, 2<br>3, 4</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 3<br>3, 4</td><td>R snipes R</td><td>Forced Draw</td>
-<tr><td>0, 4<br>3, 4</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>1, 1<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 2<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 4<br>3, 4</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>2, 2<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 4<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 3<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>3, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>0, 1<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 2<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>0, 3<br>4, 4</td><td>L snipes R</td><td>Forced Draw</td>
-<tr><td>1, 1<br>4, 4</td><td>L snipes L</td><td>Forced Win</td>
-<tr><td>1, 2<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>1, 3<br>4, 4</td><td>L snipes L</td><td>Forced Win</td>
-<tr><td>1, 4<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
-<tr><td>2, 2<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>2, 3<br>4, 4</td><td>L snipes L</td><td>Forced Win</td>
-<tr><td>2, 4<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 3<br>4, 4</td><td>L snipes L</td><td>Forced Draw</td>
-<tr><td>3, 4<br>4, 4</td><td>L snipes R</td><td>Forced Win</td>
-</tbody></table>
-	</body>
+
+function logToConsole(message) {
+    const consoleDiv = document.getElementById("console");
+    consoleDiv.innerHTML = message;
+}
+
+function renderPlayerMoves() {
+    const movesDiv = document.getElementById("moves");
+    movesDiv.innerHTML = "";
+    
+    const validMoves = game.getValidMoves(game.player, game.bot);
+    
+    validMoves.forEach((move) => {
+        const btn = document.createElement("button");
+        if (move.type === "attack") {
+            const aHand = move.attackerIdx === 0 ? "Left" : "Right";
+            const dHand = move.defenderIdx === 0 ? "Left" : "Right";
+            btn.innerText = `Attack Bot's ${dHand} with your ${aHand}`;
+            btn.onclick = () => executePlayerMove(move);
+        } else if (move.type === "split") {
+            btn.innerText = `Split evenly to [${move.left}, ${move.right}]`;
+            btn.onclick = () => executePlayerMove(move);
+        }
+        movesDiv.appendChild(btn);
+    });
+}
+
+function executePlayerMove(move) {
+    if (game.gameOver) return;
+
+    if (move.type === "attack") {
+        game.bot[move.defenderIdx] = game.applyOverflowRule(game.bot[move.defenderIdx] + game.player[move.attackerIdx]);
+        logToConsole(`You attacked Bot's ${move.defenderIdx === 0 ? 'Left' : 'Right'} hand!`);
+    } else if (move.type === "split") {
+        game.player = [move.left, move.right];
+        logToConsole(`You split your hands to [${move.left}, ${move.right}]`);
+    }
+
+    game.currentTurn = "Bot";
+    updateUI();
+}
+
+function handleBotTurn() {
+    logToConsole("Bot is thinking...");
+    
+    // Depth 7 like your Python script
+    let { move } = game.minimax(game.player, game.bot, 7, true);
+    
+    if (!move) {
+        move = game.getValidMoves(game.bot, game.player)[0];
+    }
+
+    if (move.type === "attack") {
+        game.player[move.defenderIdx] = game.applyOverflowRule(game.player[move.defenderIdx] + game.bot[move.attackerIdx]);
+        const aHand = move.attackerIdx === 0 ? "Left" : "Right";
+        const dHand = move.defenderIdx === 0 ? "Left" : "Right";
+        logToConsole(`Bot attacks your ${dHand} hand using its ${aHand} hand!`);
+    } else if (move.type === "split") {
+        game.bot = [move.left, move.right];
+        logToConsole(`Bot splits its hands evenly into [${move.left}, ${move.right}]!`);
+    }
+
+    game.currentTurn = "Player";
+    updateUI();
+}
+
+// Kick-off game
+updateUI();
+</script>
+
+</body>
 </html>
