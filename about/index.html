@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>About Chopfish</title>
+		<meta name="description" content="About Chopfish, the world's most powerful Chopsticks engine.">
+		<style>
+			body {
+				font-family: Segoe UI, sans-serif;
+			}
+			.main {
+				padding: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="main">
+			This is an article about the Chopsticks AI Chopfish. To play Chopfish, see  <a href="../play">here</a>.
+			To analyze a Chopsticks position, see <a href="../solver">here</a>.
+			<h2>About Chopfish</h2>
+			Chopfish is the latest and greatest technology in Chopsticks history.
+			It can perform analysis, predict moves, and make moves all in less than a second!
+			<h2>How Chopfish Plays</h2>
+			Chopfish plays with simple rules: Rollover and Even-Split.
+			These rules were created by children playing and wanted to make Chopsticks easy but engaging.
+			In official math papers, rollover and even-split do not feature though.
+			With rollover, the product of an attack is <p style="font-family: Times New Roman;">(attacked + attacker) mod 5.</p>
+			With even-split, you can only split from 0,4 to 2,2 and from 0,2 to 1,1.
+			<h2>How Chopfish Works</h2>
+			<b>Step 1:</b> Chopfish builds a tree of positions with each available move.
+			<br><b>Step 2: </b>Whenever a branch either starts looping with best moves, produces a win, or produces a loss,
+			that branch stops.
+			<br><b>Step 3: </b>After all the branches stop, if a win is present, Chopfish goes in for the kill.
+			If no win is available, it goes for a loop. Chopfish never loses in a full match without cheating.
+			<h2>Why "Chopfish"?</h2>
+			Chopfish was named after Stockfish, the strongest chess bot in history.
+			It was chosen because Chopfish is the Stockfish of Chopsticks.
+			<h3>Quick shoutout: How to get Stockfish</h3>
+			Did you know Stockfish is available to the public and absolutely FREE?
+			That's right, you can get the world's strongest chess player right on your computer!
+			On Linux, run:
+			<pre><code>
+sudo apt install stockfish
+			</code></pre>
+			On MacOS/Windows/non-debian Linux, go to <a href="stockfishchess.org/download">the official Stockfish website</a>
+			and download Stockfish.
+		</div>
+	</body>
+</html>
